@@ -43,22 +43,10 @@ sites:
     sitemap_urls:
       - "https://geometrylite.io/sitemap.xml"
     active: true
-  - name: "Bloxinformer"
-    sitemap_urls:
-      - "https://bloxinformer.com/sitemap.xml"
-    active: true
-  - name: "Pollo"
-    sitemap_urls:
-      - "https://pollo.ai/sitemap.xml"
-    active: true
-  - name: "Bylo"
-    sitemap_urls:
-      - "https://bylo.ai/sitemap-secondary-page-0.xml"
-    active: true
 
 
 feishu:
-  webhook_url: "https://open.larksuite.com/open-apis/bot/v2/hook/c78e401d-1a1f-4500-830b-36528b83011a"
+  webhook_url: ""
   secret: "YOUR_SECRET"
 
 storage:
