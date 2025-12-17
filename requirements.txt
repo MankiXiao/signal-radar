@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+python-dateutil
+pyyaml
+lxml
+cloudscraper
