@@ -50,3 +50,64 @@ jobs:
 
           git commit -m "📦 Update sitemap data: $(date +'%Y-%m-%d')"
           git push
+
+      - name: Notify Feishu (only when diff changes)
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        run: |
+          python - << 'PY'
+          import os, glob, json
+          from urllib.request import Request, urlopen
+
+          webhook = os.getenv("FEISHU_WEBHOOK")
+          if not webhook:
+            raise SystemExit("Missing FEISHU_WEBHOOK secret")
+
+          # 找最新 diff 目录（例如 diff/20251216）
+          diff_dirs = sorted(glob.glob("diff/*"))
+          if not diff_dirs:
+            print("No diff directories found, skip notify.")
+            raise SystemExit(0)
+
+          latest_dir = diff_dirs[-1]
+
+          def read_lines(path):
+            try:
+              with open(path, "r", encoding="utf-8") as f:
+                return [x.strip() for x in f.read().splitlines() if x.strip()]
+            except FileNotFoundError:
+              return []
+
+          added = read_lines(os.path.join(latest_dir, "added.txt"))
+          removed = read_lines(os.path.join(latest_dir, "removed.txt"))
+
+          # 没变化就不推（避免刷屏）
+          if not added and not removed:
+            print("No added/removed URLs, skip notify.")
+            raise SystemExit(0)
+
+          # 控制消息长度：最多展示前 20 条
+          def fmt_list(lst, limit=20):
+            show = lst[:limit]
+            more = len(lst) - len(show)
+            lines = "\n".join([f"- {u}" for u in show])
+            if more > 0:
+              lines += f"\n... 还有 {more} 条未展示"
+            return lines
+
+          title = f"🧭 Sitemap 变更（{os.path.basename(latest_dir)}）"
+          parts = []
+          if added:
+            parts.append(f"✅ 新增 {len(added)} 条\n{fmt_list(added)}")
+          if removed:
+            parts.append(f"❌ 删除 {len(removed)} 条\n{fmt_list(removed)}")
+
+          text = title + "\n\n" + "\n\n".join(parts)
+
+          payload = {"msg_type": "text", "content": {"text": text}}
+          req = Request(webhook, data=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json"}, method="POST")
+          with urlopen(req) as resp:
+            print(resp.read().decode("utf-8"))
+          PY
+
