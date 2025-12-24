@@ -43,6 +43,38 @@ sites:
     sitemap_urls:
       - "https://geometrylite.io/sitemap.xml"
     active: true
+  - name: "OnlineGamesIO"
+    sitemap_urls:
+      - "https://www.onlinegames.io/sitemap.xml"
+    active: true
+  - name: "Playhop"
+    sitemap_urls: 
+      - "https://playhop.com/sitemaps/sitemap.index.xml"
+    active: true
+  - name: "CrazyGames"
+    sitemap_urls: 
+      - "https://www.crazygames.com/sitemap-index.xml"
+    active: true
+  - name: "Playhop"
+    sitemap_urls: 
+      - "https://playhop.com/sitemaps/sitemap.index.xml"
+    active: true
+  - name: "GamePix"
+    sitemap_urls: 
+      - "https://www.gamepix.com/sitemaps/index.xml"
+    active: true
+  - name: "Poki"
+    sitemap_urls: 
+      - "https://poki.com/zh/sitemaps/index.xml"
+    active: true
+  - name: "DashMetry"
+    sitemap_urls: 
+      - "https://dashmetry.com/sitemap.xml"
+    active: true
+  - name: "Gamemonetize"
+    sitemap_urls: 
+      - "https://gamemonetize.com/sitemap.xml"
+    active: true
 
 
 feishu:
