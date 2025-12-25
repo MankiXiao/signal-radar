@@ -1020,6 +1020,8 @@ https://sprunki.org/buckshot-roulette
 https://sprunki.org/jelly-runner
 https://sprunki.org/wheelie-master
 https://sprunki.org/car-chaos
+https://sprunki.org/mergebox-sprunkbated
+https://sprunki.org/bebder-game
 https://sprunki.org/games/sprunki-games
 https://sprunki.org/games/sprunki-mod
 https://sprunki.org/games/music-games
@@ -1138,6 +1140,9 @@ https://sprunki.org/tag/shotgun
 https://sprunki.org/tag/mind-game
 https://sprunki.org/tag/platforms
 https://sprunki.org/tag/bike
+https://sprunki.org/tag/merge-game
+https://sprunki.org/tag/relaxed
+https://sprunki.org/tag/indie
 https://sprunki.org/blog/sprunki
 https://sprunki.org/blog
 https://sprunki.org/about-us
