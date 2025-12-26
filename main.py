@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 import cloudscraper
 import yaml
@@ -10,13 +9,13 @@ from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
-# ========== 基础设置 ==========
+# ================= 基础设置 =================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# ========== 配置 ==========
+# ================= 配置 =================
 def load_config(path="config.yaml"):
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
@@ -24,55 +23,46 @@ def load_config(path="config.yaml"):
 def get_feishu_webhook(config):
     return os.getenv("FEISHU_WEBHOOK") or config.get("feishu", {}).get("webhook_url")
 
-# ========== URL 规范化（关键修复点） ==========
+# ================= URL 规范化 =================
 def normalize_url(url: str) -> str:
     """
-    保留 scheme + domain + path
+    只保留 scheme + domain + path
     去掉 ?query 和 #fragment
     """
     try:
         parts = urlsplit(url)
-        return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+        return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/"), "", ""))
     except Exception:
         return url
 
-# ========== URL 过滤（降噪关键） ==========
+# ================= URL 过滤（核心降噪） =================
 EXCLUDE_KEYWORDS = [
-    "/tag/",
-    "/tags/",
-    "/category/",
-    "/categories/",
-    "/about",
-    "/privacy",
-    "/terms",
-    "/contact",
-    "/faq",
-    "/policy",
-    "/search",
-    "/sitemap",
-    "/wp-",
+    "/tag/", "/tags/",
+    "/category/", "/categories/",
+    "/about", "/privacy", "/terms",
+    "/contact", "/faq", "/policy",
+    "/search", "/sitemap", "/wp-",
 ]
 
 def is_valid_game_url(url: str) -> bool:
     u = url.lower()
 
-    # 1. 黑名单关键词
+    # 黑名单关键词
     for k in EXCLUDE_KEYWORDS:
         if k in u:
             return False
 
-    # 2. 太短的路径（通常不是详情页）
-    try:
-        path = urlsplit(u).path
-        if path.count("/") < 2:
-            return False
-    except Exception:
+    # 必须是 http(s)
+    if not u.startswith("http"):
+        return False
+
+    # 路径太短的一般不是游戏页
+    if urlsplit(u).path.count("/") < 2:
         return False
 
     return True
 
-
-# ========== Sitemap 处理 ==========
+# ================= Sitemap 处理 =================
 def process_sitemap(url):
     try:
         scraper = cloudscraper.create_scraper()
@@ -95,25 +85,33 @@ def process_sitemap(url):
 def parse_xml(content):
     soup = BeautifulSoup(content, "xml")
     urls = []
+
     for loc in soup.find_all("loc"):
-        u = loc.get_text().strip()
-        if u:
-            nu = normalize_url(u)
-            if is_valid_game_url(nu):
-            urls.append(nu)
+        raw = loc.get_text().strip()
+        if not raw:
+            continue
+
+        u = normalize_url(raw)
+        if is_valid_game_url(u):
+            urls.append(u)
+
     return urls
 
 def parse_txt(text):
     urls = []
+
     for line in text.splitlines():
         line = line.strip()
-        if line.startswith("http"):
-            nu = normalize_url(line)
-            if is_valid_game_url(nu):
-                urls.append(nu)
+        if not line.startswith("http"):
+            continue
+
+        u = normalize_url(line)
+        if is_valid_game_url(u):
+            urls.append(u)
+
     return urls
 
-# ========== 数据存储 ==========
+# ================= 数据存储 =================
 def save_latest(site, urls):
     Path("latest").mkdir(exist_ok=True)
     with open(f"latest/{site}.txt", "w", encoding="utf-8") as f:
@@ -133,7 +131,7 @@ def save_diff(site, urls):
     with open(folder / f"{site}.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(urls))
 
-# ========== 飞书通知 ==========
+# ================= 飞书通知 =================
 def send_feishu(site, urls, config):
     if not urls:
         return
@@ -147,7 +145,7 @@ def send_feishu(site, urls, config):
         "msg_type": "interactive",
         "card": {
             "header": {
-                "title": {"tag": "plain_text", "content": f"🎮 {site} 游戏上新"},
+                "title": {"tag": "plain_text", "content": f"🎮 {site} 新增游戏"},
                 "template": "green"
             },
             "elements": [
@@ -164,7 +162,7 @@ def send_feishu(site, urls, config):
 
     requests.post(webhook, json=payload, timeout=10)
 
-# ========== 清理历史 ==========
+# ================= 清理历史 =================
 def cleanup(config):
     days = config.get("storage", {}).get("retention_days", 7)
     cutoff = datetime.now() - timedelta(days=days)
@@ -176,10 +174,10 @@ def cleanup(config):
                 for f in d.glob("*"):
                     f.unlink()
                 d.rmdir()
-        except:
+        except Exception:
             pass
 
-# ========== 主流程 ==========
+# ================= 主流程 =================
 def main():
     config = load_config()
 
@@ -194,7 +192,7 @@ def main():
         for sm in site.get("sitemap_urls", []):
             all_urls.extend(process_sitemap(sm))
 
-        # 去重（顺序稳定）
+        # 去重（保持顺序）
         current = list(dict.fromkeys(all_urls))
         last = load_latest(name)
 
